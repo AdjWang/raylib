@@ -41,7 +41,8 @@ set(raylib_sources
 
 # <root>/cmake/GlfwImport.cmake handles the details around the inclusion of glfw
 if (NOT ${PLATFORM} MATCHES "Web")
-    include(GlfwImport)
+    # DEBUG
+    # include(GlfwImport)
 endif ()
 
 # Sets additional platform options and link libraries for each platform

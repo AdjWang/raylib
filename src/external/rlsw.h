@@ -2878,9 +2878,116 @@ DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_TEX, 1, 0, 0)
 DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_DEPTH, 0, 1, 0)
 DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_BLEND, 0, 0, 1)
 DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_TEX_DEPTH, 1, 1, 0)
-DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_TEX_BLEND, 1, 0, 1)
+// DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_TEX_BLEND, 1, 0, 1)
 DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_DEPTH_BLEND, 0, 1, 1)
 DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_TEX_DEPTH_BLEND, 1, 1, 1)
+
+static inline void sw_quad_raster_axis_aligned_TEX_BLEND(void) {
+  const sw_vertex_t* sortedVerts[4];
+  sw_quad_sort_cw(sortedVerts);
+  const sw_vertex_t* v0 = sortedVerts[0];
+  const sw_vertex_t* v1 = sortedVerts[1];
+  const sw_vertex_t* v2 = sortedVerts[2];
+  const sw_vertex_t* v3 = sortedVerts[3];
+  if (!v0) return;
+  if (!v1) return;
+  if (!v2) return;
+  if (!v3) return;
+  int xMin = (int)v0->screen[0];
+  int yMin = (int)v0->screen[1];
+  int xMax = (int)v2->screen[0];
+  int yMax = (int)v2->screen[1];
+  float w = v2->screen[0] - v0->screen[0];
+  float h = v2->screen[1] - v0->screen[1];
+  if ((w == 0) || (h == 0)) return;
+  float wRcp = (w > 0.0f) ? 1.0f / w : 0.0f;
+  float hRcp = (h > 0.0f) ? 1.0f / h : 0.0f;
+  float xSubstep = 1.0f - sw_fract(v0->screen[0]);
+  float ySubstep = 1.0f - sw_fract(v0->screen[1]);
+  float dUdx = 0.0f, dVdx = 0.0f;
+  float dUdy = 0.0f, dVdy = 0.0f;
+  if (1) {
+    dUdx = (v1->texcoord[0] - v0->texcoord[0]) * wRcp;
+    dVdx = (v1->texcoord[1] - v0->texcoord[1]) * wRcp;
+    dUdy = (v3->texcoord[0] - v0->texcoord[0]) * hRcp;
+    dVdy = (v3->texcoord[1] - v0->texcoord[1]) * hRcp;
+  }
+  float dCdx[4], dCdy[4];
+  dCdx[0] = (v1->color[0] - v0->color[0]) * wRcp;
+  dCdx[1] = (v1->color[1] - v0->color[1]) * wRcp;
+  dCdx[2] = (v1->color[2] - v0->color[2]) * wRcp;
+  dCdx[3] = (v1->color[3] - v0->color[3]) * wRcp;
+  dCdy[0] = (v3->color[0] - v0->color[0]) * hRcp;
+  dCdy[1] = (v3->color[1] - v0->color[1]) * hRcp;
+  dCdy[2] = (v3->color[2] - v0->color[2]) * hRcp;
+  dCdy[3] = (v3->color[3] - v0->color[3]) * hRcp;
+  float dZdx, dZdy;
+  dZdx = (v1->homogeneous[2] - v0->homogeneous[2]) * wRcp;
+  dZdy = (v3->homogeneous[2] - v0->homogeneous[2]) * hRcp;
+  const sw_texture_t* tex;
+  if (1) tex = &RLSW.loadedTextures[RLSW.currentTexture];
+  sw_pixel_t* pixels = RLSW.framebuffer.pixels;
+  int wDst = RLSW.framebuffer.width;
+  float zScanline = v0->homogeneous[2] + dZdx * xSubstep + dZdy * ySubstep;
+  float uScanline = v0->texcoord[0] + dUdx * xSubstep + dUdy * ySubstep;
+  float vScanline = v0->texcoord[1] + dVdx * xSubstep + dVdy * ySubstep;
+  float colorScanline[4] = {
+      v0->color[0] + dCdx[0] * xSubstep + dCdy[0] * ySubstep,
+      v0->color[1] + dCdx[1] * xSubstep + dCdy[1] * ySubstep,
+      v0->color[2] + dCdx[2] * xSubstep + dCdy[2] * ySubstep,
+      v0->color[3] + dCdx[3] * xSubstep + dCdy[3] * ySubstep};
+  for (int y = yMin; y < yMax; y++) {
+    sw_pixel_t* ptr = pixels + y * wDst + xMin;
+    float z = zScanline;
+    float u = uScanline;
+    float v = vScanline;
+    float color[4] = {colorScanline[0], colorScanline[1], colorScanline[2],
+                      colorScanline[3]};
+    for (int x = xMin; x < xMax; x++) {
+      float srcColor[4] = {color[0], color[1], color[2], color[3]};
+      if (0) {
+        float depth = sw_framebuffer_read_depth(ptr);
+        if (z > depth) goto discard;
+      }
+      sw_framebuffer_write_depth(ptr, z);
+      if (1) {
+        float texColor[4];
+        sw_texture_sample(texColor, tex, u, v, dUdx, dUdy, dVdx, dVdy);
+        srcColor[0] *= texColor[0];
+        srcColor[1] *= texColor[1];
+        srcColor[2] *= texColor[2];
+        srcColor[3] *= texColor[3];
+      }
+      if (1) {
+        float dstColor[4];
+        sw_framebuffer_read_color(dstColor, ptr);
+        sw_blend_colors(dstColor, srcColor);
+        sw_framebuffer_write_color(ptr, dstColor);
+      } else
+        sw_framebuffer_write_color(ptr, srcColor);
+    discard:
+      z += dZdx;
+      color[0] += dCdx[0];
+      color[1] += dCdx[1];
+      color[2] += dCdx[2];
+      color[3] += dCdx[3];
+      if (1) {
+        u += dUdx;
+        v += dVdx;
+      }
+      ++ptr;
+    }
+    zScanline += dZdy;
+    colorScanline[0] += dCdy[0];
+    colorScanline[1] += dCdy[1];
+    colorScanline[2] += dCdy[2];
+    colorScanline[3] += dCdy[3];
+    if (1) {
+      uScanline += dUdy;
+      vScanline += dVdy;
+    }
+  }
+}
 
 static inline void sw_quad_render(void)
 {

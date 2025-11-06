@@ -173,5 +173,6 @@ endif ()
 set(LIBS_PRIVATE ${LIBS_PRIVATE} ${OPENAL_LIBRARY})
 
 if (${PLATFORM} MATCHES "Desktop")
-    set(LIBS_PRIVATE ${LIBS_PRIVATE} glfw)
+    # DEBUG
+    # set(LIBS_PRIVATE ${LIBS_PRIVATE} glfw)
 endif ()

@@ -506,7 +506,7 @@ extern void LoadFontDefault(void);      // [Module: text] Loads default font on 
 extern void UnloadFontDefault(void);    // [Module: text] Unloads default font from GPU memory
 #endif
 
-extern int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
+extern int InitPlatform(void* user);          // Initialize platform (graphics, inputs and more)
 extern void ClosePlatform(void);        // Close platform
 
 static void InitTimer(void);                                // Initialize timer, hi-resolution if available (required by InitPlatform())
@@ -532,6 +532,9 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
 #if defined(PLATFORM_DESKTOP)
     #define PLATFORM_DESKTOP_GLFW
 #endif
+// DEBUG
+#undef PLATFORM_DESKTOP_GLFW
+#define PLATFORM_DESKTOP_EMBED
 
 // We're using '#pragma message' because '#warning' is not adopted by MSVC
 #if defined(SUPPORT_CLIPBOARD_IMAGE)
@@ -565,6 +568,8 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
     #include "platforms/rcore_desktop_rgfw.c"
 #elif defined(PLATFORM_DESKTOP_WIN32)
     #include "platforms/rcore_desktop_win32.c"
+#elif defined(PLATFORM_DESKTOP_EMBED)
+    #include "platforms/rcore_desktop_embed.c"
 #elif defined(PLATFORM_WEB)
     #include "platforms/rcore_web.c"
 #elif defined(PLATFORM_DRM)
@@ -625,7 +630,7 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
 //void DisableCursor(void)
 
 // Initialize window and OpenGL context
-void InitWindow(int width, int height, const char *title)
+void InitWindow(int width, int height, const char *title, void* user)
 {
     TRACELOG(LOG_INFO, "Initializing raylib %s", RAYLIB_VERSION);
 
@@ -699,7 +704,7 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize platform
     //--------------------------------------------------------------
-    int result = InitPlatform();
+    int result = InitPlatform(user);
 
     if (result != 0)
     {
