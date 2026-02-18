@@ -142,6 +142,10 @@ foreach (example_source ${example_sources})
     # Setup the example
     add_executable(${example_name} ${example_source})
 
+    if (WIN32)
+        target_compile_definitions(${example_name} PRIVATE _CRT_SECURE_NO_WARNINGS)
+        target_compile_options(${example_name} PRIVATE /utf-8)
+    endif()
     target_link_libraries(${example_name} raylib)
     if (NOT WIN32)
         target_link_libraries(${example_name} m)
