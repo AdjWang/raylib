@@ -673,12 +673,22 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize rlgl default data (buffers and shaders)
     // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
+#ifdef GRAPHICS_API_BGFX
+    isGpuReady = false;
+#else
     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
     isGpuReady = true; // Flag to note GPU has been initialized successfully
+#endif
 
     // Setup default viewport
+#ifdef GRAPHICS_API_BGFX
+    CORE.Window.render.width = width;
+    CORE.Window.render.height = height;
+#else
     SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+#endif
 
+#ifndef GRAPHICS_API_BGFX
 #if defined(SUPPORT_MODULE_RTEXT)
     #if defined(SUPPORT_DEFAULT_FONT)
         // Load default font
@@ -707,6 +717,7 @@ void InitWindow(int width, int height, const char *title)
     Texture2D texture = { rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
     SetShapesTexture(texture, (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f });    // WARNING: Module required: rshapes
     #endif
+#endif
 #endif
 
     CORE.Time.frameCounter = 0;
