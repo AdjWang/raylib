@@ -741,11 +741,13 @@ void CloseWindow(void)
     }
 #endif
 
+#ifndef GRAPHICS_API_BGFX
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
     UnloadFontDefault();        // WARNING: Module required: rtext
 #endif
 
     rlglClose();                // De-init rlgl
+#endif
 
     // De-initialize platform
     //--------------------------------------------------------------

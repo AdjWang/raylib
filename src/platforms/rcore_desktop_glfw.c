@@ -1380,6 +1380,9 @@ int InitPlatform(void)
     // with backward compatibility to older OpenGL versions.
     // For example, if using OpenGL 1.1, driver can provide a 4.3 backwards compatible context.
 
+#ifdef GRAPHICS_API_BGFX
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+#else
     // Check selection OpenGL version
     if (rlGetVersion() == RL_OPENGL_21)
     {
@@ -1423,6 +1426,7 @@ int InitPlatform(void)
         glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
         glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
     }
+#endif
 
     // NOTE: GLFW 3.4+ defers initialization of the Joystick subsystem on the first call to any Joystick related functions.
     // Forcing this initialization here avoids doing it on PollInputEvents() called by EndDrawing() after first frame has been just drawn.
@@ -1546,7 +1550,9 @@ int InitPlatform(void)
         return -1;
     }
 
+#ifndef GRAPHICS_API_BGFX
     glfwMakeContextCurrent(platform.handle);
+#endif
     result = glfwGetError(NULL);
 
     // Check context activation
@@ -1626,9 +1632,11 @@ int InitPlatform(void)
         CORE.Window.position.y = posY;
     }
 
+#ifndef GRAPHICS_API_BGFX
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
     rlLoadExtensions(glfwGetProcAddress);
+#endif
     //----------------------------------------------------------------------------
 
     // Initialize input events callbacks
