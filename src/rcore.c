@@ -3552,6 +3552,7 @@ void SetupViewport(int width, int height)
     CORE.Window.render.width = width;
     CORE.Window.render.height = height;
 
+#ifndef GRAPHICS_API_BGFX
     // Set viewport width and height
     // NOTE: We consider render size (scaled) and offset in case black bars are required and
     // render area does not match full display area (this situation is only applicable on fullscreen mode)
@@ -3571,6 +3572,7 @@ void SetupViewport(int width, int height)
 
     rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
     rlLoadIdentity();                   // Reset current matrix (modelview)
+#endif
 }
 
 // Compute framebuffer size relative to screen size and display size
