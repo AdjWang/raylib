@@ -1451,7 +1451,6 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case WM_CLOSE:
         {
             CORE.Window.shouldClose = true;
-            result = WndProcFallthrough(hwnd, msg, wparam, lparam);
         } break; 
         //case WM_QUIT: // Application closing, not related to window
         case WM_KILLFOCUS:
@@ -1606,7 +1605,6 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 SetCursor(CORE.Input.Mouse.cursorHidden? NULL : LoadCursorW(NULL, (LPCWSTR)IDC_ARROW));
                 return 0;
             }
-            result = WndProcFallthrough(hwnd, msg, wparam, lparam);
         } break;
         case WM_INPUT:
         {
@@ -1656,9 +1654,11 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
         // Message passed directly for execution (default behaviour)
         default:
-            result = WndProcFallthrough(hwnd, msg, wparam, lparam);
+            ;
     }
     //------------------------------------------------------------------------------------
+    // Fallthrough to parent window.
+    result = WndProcFallthrough(hwnd, msg, wparam, lparam);
 
     // Sanity check for flags
     if (platform.hwnd == hwnd) CheckFlags("After WndProc", hwnd, CORE.Window.flags, MakeWindowStyle(CORE.Window.flags), mask);
